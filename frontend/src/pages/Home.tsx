@@ -26,13 +26,15 @@ export default function Home() {
   const [selectedLoc, setSelectedLoc] = useState('');
 
   useEffect(() => {
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000';
+
     // Fetch CMS Contentful Page
-    fetch('http://localhost:4000/api/pages/home')
+    fetch(`${apiUrl}/api/pages/home`)
       .then(res => res.json())
       .then(data => setPageContent(data.fields))
       .catch(err => console.error(err));
 
-    fetch('http://localhost:4000/api/jobs/filters')
+    fetch(`${apiUrl}/api/jobs/filters`)
       .then(res => res.json())
       .then(data => setFilters(data))
       .catch(err => console.error(err));
@@ -44,7 +46,8 @@ export default function Home() {
     if (selectedDept) params.append('department', selectedDept);
     if (selectedLoc) params.append('location', selectedLoc);
 
-    fetch(`http://localhost:4000/api/jobs?${params.toString()}`)
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000';
+    fetch(`${apiUrl}/api/jobs?${params.toString()}`)
       .then(res => res.json())
       .then(data => {
         setJobs(data);

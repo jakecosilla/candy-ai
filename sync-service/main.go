@@ -16,6 +16,22 @@ import (
 	"go.temporal.io/sdk/workflow"
 )
 
+const (
+	queryMarkInactive = `UPDATE jobs SET is_active = FALSE`
+	queryUpsertJob    = `
+		INSERT INTO jobs (id, title, department, location, type, description, is_active, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6, TRUE, NOW())
+		ON CONFLICT (id) DO UPDATE SET
+			title = EXCLUDED.title,
+			department = EXCLUDED.department,
+			location = EXCLUDED.location,
+			description = EXCLUDED.description,
+			is_active = TRUE,
+			updated_at = NOW()
+	`
+	queryInsertSyncRun = `INSERT INTO sync_runs (start_time, end_time, status, jobs_processed) VALUES (NOW(), NOW(), 'SUCCESS', $1)`
+)
+
 type GreenhouseJob struct {
 	ID       int    `json:"id"`
 	Title    string `json:"title"`
@@ -37,7 +53,7 @@ type GreenhouseResponse struct {
 func FetchJobsActivity(ctx context.Context) ([]GreenhouseJob, error) {
 	boardToken := os.Getenv("GREENHOUSE_BOARD_TOKEN")
 	if boardToken == "" {
-		boardToken = "antigravity" // default mock
+		return nil, fmt.Errorf("GREENHOUSE_BOARD_TOKEN environment variable not set")
 	}
 	
 	url := fmt.Sprintf("https://boards-api.greenhouse.io/v1/boards/%s/jobs?content=true", boardToken)
@@ -71,7 +87,7 @@ func FetchJobsActivity(ctx context.Context) ([]GreenhouseJob, error) {
 func UpsertPostgresActivity(ctx context.Context, jobs []GreenhouseJob) error {
 	dbURL := os.Getenv("DATABASE_URL")
 	if dbURL == "" {
-		dbURL = "postgres://candy:password@localhost:5432/candy_ai?sslmode=disable"
+		return fmt.Errorf("DATABASE_URL environment variable not set")
 	}
 	
 	db, err := sql.Open("postgres", dbURL)
@@ -81,7 +97,7 @@ func UpsertPostgresActivity(ctx context.Context, jobs []GreenhouseJob) error {
 	defer db.Close()
 
 	// 1. Mark all current jobs as inactive to catch "closed" jobs
-	_, err = db.Exec("UPDATE jobs SET is_active = FALSE")
+	_, err = db.Exec(queryMarkInactive)
 	if err != nil {
 		return err
 	}
@@ -93,17 +109,8 @@ func UpsertPostgresActivity(ctx context.Context, jobs []GreenhouseJob) error {
 			department = job.Departments[0].Name
 		}
 		
-		_, err := db.Exec(`
-			INSERT INTO jobs (id, title, department, location, type, description, is_active, updated_at)
-			VALUES ($1, $2, $3, $4, $5, $6, TRUE, NOW())
-			ON CONFLICT (id) DO UPDATE SET
-				title = EXCLUDED.title,
-				department = EXCLUDED.department,
-				location = EXCLUDED.location,
-				description = EXCLUDED.description,
-				is_active = TRUE,
-				updated_at = NOW()
-		`, fmt.Sprintf("%d", job.ID), job.Title, department, job.Location.Name, "Full-time", job.Content)
+		_, err := db.Exec(queryUpsertJob,
+			fmt.Sprintf("%d", job.ID), job.Title, department, job.Location.Name, "Full-time", job.Content)
 		
 		if err != nil {
 			log.Printf("Failed to upsert job %d: %v", job.ID, err)
@@ -111,7 +118,7 @@ func UpsertPostgresActivity(ctx context.Context, jobs []GreenhouseJob) error {
 	}
 
 	// 3. Log Sync Run
-	_, _ = db.Exec("INSERT INTO sync_runs (start_time, end_time, status, jobs_processed) VALUES (NOW(), NOW(), 'SUCCESS', $1)", len(jobs))
+	_, _ = db.Exec(queryInsertSyncRun, len(jobs))
 	return nil
 }
 
@@ -143,8 +150,13 @@ func GreenhouseSyncWorkflow(ctx workflow.Context) error {
 }
 
 func main() {
+	temporalHost := os.Getenv("TEMPORAL_HOST")
+	if temporalHost == "" {
+		temporalHost = client.DefaultHostPort
+	}
+
 	c, err := client.Dial(client.Options{
-		HostPort: client.DefaultHostPort, // Or your remote Temporal endpoint
+		HostPort: temporalHost,
 	})
 	if err != nil {
 		log.Fatalln("Unable to create client", err)

@@ -17,7 +17,8 @@ export default function JobDetails() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`http://localhost:4000/api/jobs/${id}`)
+    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000';
+    fetch(`${apiUrl}/api/jobs/${id}`)
       .then(res => res.json())
       .then(data => {
         setJob(data);

@@ -27,7 +27,8 @@ export default function Chatbot() {
     setIsTyping(true);
 
     try {
-      const response = await fetch('http://localhost:8000/chat', {
+      const aiUrl = import.meta.env.VITE_AI_URL || 'http://localhost:8000';
+      const response = await fetch(`${aiUrl}/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: userMsg.text })

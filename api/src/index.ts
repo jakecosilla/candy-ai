@@ -12,14 +12,21 @@ app.use(express.json());
 
 // Contentful Client Integration
 const contentfulClient = createClient({
-  space: process.env.CONTENTFUL_SPACE_ID || 'demo_space',
-  accessToken: process.env.CONTENTFUL_ACCESS_TOKEN || 'demo_token',
+  space: process.env.CONTENTFUL_SPACE_ID as string,
+  accessToken: process.env.CONTENTFUL_ACCESS_TOKEN as string,
 });
 
 // PostgreSQL Database Connection
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL || 'postgres://candy:password@localhost:5432/candy_ai'
+  connectionString: process.env.DATABASE_URL
 });
+
+const QUERIES = {
+  getJobsBase: 'SELECT * FROM jobs WHERE is_active = TRUE',
+  getDepartments: 'SELECT DISTINCT department FROM jobs WHERE is_active = TRUE AND department IS NOT NULL',
+  getLocations: 'SELECT DISTINCT location FROM jobs WHERE is_active = TRUE AND location IS NOT NULL',
+  getJobById: 'SELECT * FROM jobs WHERE id = $1'
+};
 
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', service: 'candy-ai-bff' });
@@ -39,14 +46,7 @@ app.get('/api/pages/:slug', async (req, res) => {
     }
   } catch (error) {
     console.error('Contentful error:', error);
-    // Fallback to mock data to keep the UI functioning if keys aren't set
-    res.json({
-      sys: { id: 'mock' },
-      fields: {
-        title: 'Do the best work of your life.',
-        subtitle: 'Join AntiGravity and help us shape the future of AI-powered workflows. We are looking for extraordinary people to solve hard problems.',
-      }
-    });
+    res.status(500).json({ error: 'Failed to fetch content from CMS' });
   }
 });
 
@@ -54,8 +54,8 @@ app.get('/api/pages/:slug', async (req, res) => {
 app.get('/api/jobs', async (req, res) => {
   try {
     const { department, location } = req.query;
-    let query = 'SELECT * FROM jobs WHERE is_active = TRUE';
-    const params = [];
+    let query = QUERIES.getJobsBase;
+    const params: any[] = [];
     
     if (department) {
       params.push(department);
@@ -68,15 +68,7 @@ app.get('/api/jobs', async (req, res) => {
     
     query += ' ORDER BY created_at DESC';
     const result = await pool.query(query, params);
-    
-    if (result.rows.length === 0) {
-      // Return fallback to prevent empty screen if sync hasn't run yet
-      res.json([
-        { id: '1', title: 'Senior Software Engineer, Frontend', department: 'Engineering', location: 'Remote', type: 'Full-time', description: 'Real job data from Postgres will appear here once Greenhouse sync completes.' }
-      ]);
-    } else {
-      res.json(result.rows);
-    }
+    res.json(result.rows);
   } catch (error) {
     console.error('Postgres error:', error);
     res.status(500).json({ error: 'Database connection error' });
@@ -86,31 +78,25 @@ app.get('/api/jobs', async (req, res) => {
 // GET Job Filters
 app.get('/api/jobs/filters', async (req, res) => {
   try {
-    const depRes = await pool.query('SELECT DISTINCT department FROM jobs WHERE is_active = TRUE AND department IS NOT NULL');
-    const locRes = await pool.query('SELECT DISTINCT location FROM jobs WHERE is_active = TRUE AND location IS NOT NULL');
+    const depRes = await pool.query(QUERIES.getDepartments);
+    const locRes = await pool.query(QUERIES.getLocations);
     
-    const departments = depRes.rows.map(r => r.department);
-    const locations = locRes.rows.map(r => r.location);
+    const departments = depRes.rows.map((r: any) => r.department);
+    const locations = locRes.rows.map((r: any) => r.location);
     
-    if (departments.length === 0 && locations.length === 0) {
-      res.json({ departments: ['Engineering', 'Design', 'People'], locations: ['Remote', 'San Francisco, CA', 'New York, NY'] });
-    } else {
-      res.json({ departments, locations });
-    }
+    res.json({ departments, locations });
   } catch (error) {
     console.error('Postgres filter error:', error);
-    res.json({ departments: ['Engineering', 'Design', 'People'], locations: ['Remote', 'San Francisco, CA', 'New York, NY'] });
+    res.status(500).json({ error: 'Database connection error' });
   }
 });
 
 // GET Job Details
 app.get('/api/jobs/:id', async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM jobs WHERE id = $1', [req.params.id]);
+    const result = await pool.query(QUERIES.getJobById, [req.params.id]);
     if (result.rows.length > 0) {
       res.json(result.rows[0]);
-    } else if (req.params.id === '1') {
-      res.json({ id: '1', title: 'Senior Software Engineer, Frontend', department: 'Engineering', location: 'Remote', type: 'Full-time', description: 'Real job data from Postgres will appear here once Greenhouse sync completes.' });
     } else {
       res.status(404).json({ error: 'Job not found' });
     }
