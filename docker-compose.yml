@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: pgvector/pgvector:15
+    environment:
+      - POSTGRES_USER=candy
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=candy_ai
+    ports:
+      - "5432:5432"
+
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+
+  temporal:
+    image: temporalio/auto-setup
+    environment:
+      - DB=postgresql
+      - DB_PORT=5432
+      - POSTGRES_USER=candy
+      - POSTGRES_PWD=password
+      - POSTGRES_SEEDS=postgres
+    ports:
+      - "7233:7233"
+      - "8233:8233"
+    depends_on:
+      - postgres
