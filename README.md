@@ -63,4 +63,4 @@ go run main.go
 ```
 
 ## Responsible AI & Governance
-This platform adheres to AntiGravity's strict data compliance. All LLM endpoints are guarded against releasing candidate PII, company salaries, or internal policy documents improperly.
+This platform adheres to strict data compliance. All LLM endpoints are guarded against releasing candidate PII, company salaries, or internal policy documents improperly.
