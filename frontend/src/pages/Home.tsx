@@ -20,11 +20,18 @@ export default function Home() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [filters, setFilters] = useState<Filters>({ departments: [], locations: [] });
   const [loading, setLoading] = useState(true);
+  const [pageContent, setPageContent] = useState<any>(null);
   
   const [selectedDept, setSelectedDept] = useState('');
   const [selectedLoc, setSelectedLoc] = useState('');
 
   useEffect(() => {
+    // Fetch CMS Contentful Page
+    fetch('http://localhost:4000/api/pages/home')
+      .then(res => res.json())
+      .then(data => setPageContent(data.fields))
+      .catch(err => console.error(err));
+
     fetch('http://localhost:4000/api/jobs/filters')
       .then(res => res.json())
       .then(data => setFilters(data))
@@ -52,8 +59,8 @@ export default function Home() {
   return (
     <>
       <div className="page-header">
-        <h1 className="page-title">Do the best work of your life.</h1>
-        <p className="page-subtitle">Join AntiGravity and help us shape the future of AI-powered workflows. We're looking for extraordinary people to solve hard problems.</p>
+        <h1 className="page-title">{pageContent ? pageContent.title : 'Do the best work of your life.'}</h1>
+        <p className="page-subtitle">{pageContent ? pageContent.subtitle : 'Join us and help shape the future of AI.'}</p>
       </div>
 
       <div className="input-group">
