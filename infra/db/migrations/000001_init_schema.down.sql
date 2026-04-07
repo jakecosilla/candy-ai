@@ -1,0 +1,5 @@
+DROP TABLE IF EXISTS knowledge_documents;
+DROP TABLE IF EXISTS sync_run_errors;
+DROP TABLE IF EXISTS sync_runs;
+DROP TABLE IF EXISTS jobs;
+DROP EXTENSION IF EXISTS vector;

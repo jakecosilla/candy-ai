@@ -1,8 +1,6 @@
--- Core database schema for Candy AI Platform
-
 CREATE EXTENSION IF NOT EXISTS vector;
 
-CREATE TABLE IF NOT EXISTS jobs (
+CREATE TABLE jobs (
     id VARCHAR(255) PRIMARY KEY,
     title VARCHAR(255) NOT NULL,
     department VARCHAR(255),
@@ -14,7 +12,7 @@ CREATE TABLE IF NOT EXISTS jobs (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
-CREATE TABLE IF NOT EXISTS sync_runs (
+CREATE TABLE sync_runs (
     id SERIAL PRIMARY KEY,
     start_time TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     end_time TIMESTAMP WITH TIME ZONE,
@@ -23,7 +21,14 @@ CREATE TABLE IF NOT EXISTS sync_runs (
     error_log TEXT
 );
 
-CREATE TABLE IF NOT EXISTS knowledge_documents (
+CREATE TABLE sync_run_errors (
+    id SERIAL PRIMARY KEY,
+    sync_run_id INT REFERENCES sync_runs(id) ON DELETE CASCADE,
+    error_message TEXT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TABLE knowledge_documents (
     id SERIAL PRIMARY KEY,
     content TEXT,
     embedding vector(1536),
