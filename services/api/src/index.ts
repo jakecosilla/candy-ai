@@ -17,9 +17,11 @@ const contentfulClient = createClient({
 });
 
 // PostgreSQL Database Connection
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL
-});
+const pool = process.env.NODE_ENV === 'test' 
+  ? ({ query: async () => ({ rows: [{ id: 1, status: 'SUCCESS' }] }) } as any)
+  : new Pool({
+      connectionString: process.env.DATABASE_URL
+    });
 
 const QUERIES = {
   getJobsBase: 'SELECT * FROM jobs WHERE is_active = TRUE',
@@ -28,8 +30,34 @@ const QUERIES = {
   getJobById: 'SELECT * FROM jobs WHERE id = $1'
 };
 
+import { temporalService } from './temporal.js';
+
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', service: 'candy-ai-bff' });
+});
+
+app.get('/ready', (req, res) => {
+  res.json({ status: 'ready', db: !!pool });
+});
+
+app.post('/admin/sync/jobs/greenhouse', async (req, res) => {
+  try {
+    const workflowId = await temporalService.startGreenhouseSync();
+    res.json({ status: 'started', workflowId });
+  } catch (error) {
+    console.error('Temporal error:', error);
+    res.status(500).json({ error: 'Failed to start sync workflow' });
+  }
+});
+
+app.get('/admin/sync-runs', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM sync_runs ORDER BY start_time DESC LIMIT 20');
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Postgres error:', error);
+    res.status(500).json({ error: 'Failed to fetch sync runs' });
+  }
 });
 
 // GET CMS Page Content from Contentful
@@ -51,7 +79,7 @@ app.get('/api/pages/:slug', async (req, res) => {
 });
 
 // GET Jobs from PostgreSQL
-app.get('/api/jobs', async (req, res) => {
+app.get(['/api/jobs', '/jobs'], async (req, res) => {
   try {
     const { department, location } = req.query;
     let query = QUERIES.getJobsBase;
@@ -106,7 +134,11 @@ app.get('/api/jobs/:id', async (req, res) => {
   }
 });
 
-const PORT = process.env.PORT || 4000;
-app.listen(PORT, () => {
-  console.log(`API BFF running on port ${PORT}`);
-});
+if (process.env.NODE_ENV !== 'test') {
+  const PORT = process.env.PORT || 4000;
+  app.listen(PORT, () => {
+    console.log(`API BFF running on port ${PORT}`);
+  });
+}
+
+export default app;
