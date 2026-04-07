@@ -10,6 +10,14 @@ services:
     ports:
       - "5432:5432"
 
+  db-migrator:
+    image: migrate/migrate
+    volumes:
+      - ./infra/db/migrations:/migrations
+    command: ["-path", "/migrations", "-database", "postgres://candy:password@postgres:5432/candy_ai?sslmode=disable", "up"]
+    depends_on:
+      - postgres
+
   redis:
     image: redis:alpine
     ports:
