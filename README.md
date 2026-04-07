@@ -2,65 +2,79 @@
 
 Candy AI is an AI-powered careers platform designed to map candidate experiences, power practical Recruiter and HR operations, and intelligently serve knowledge safely.
 
-## Architecture & Repositories
+## Architecture & Layout
 
-This platform is divided into four main services managed separately in this monorepo structure:
+This monorepo utilizes a clean, production-ready structure dividing infrastructural components and standalone business services:
 
-1. **`frontend/`** (Candidate Experience) 
-   - A React + TypeScript + Vite application.
-   - Provides a premium, glassmorphic UI integrated with AI chat features and job boards.
-2. **`api/`** (Node.js API BFF Layer)
-   - Express backend that supplies structured job data, serving as the connective API pipeline between our services.
-3. **`sync-service/`** (Golang Synchronization Service)
-   - Go application structured to handle syncing long-running Greenhouse tasks using standard operational workflows (e.g., Temporal).
-4. **`ai-service/`** (Python Capabilities)
-   - FastAPI integration layering LangChain workflows that process candidate LLM queries securely using PGVector retrieval processes (RAG).
+- **`infra/`**
+  - Contains database schemas (`schema.sql`) and other deployment configurations.
+- **`services/`**
+  - **`frontend/`** (Candidate Experience): React + TypeScript + Vite UI.
+  - **`api/`** (Node.js API BFF Layer): Express backend bridging frontend and backend services.
+  - **`ai-service/`** (Python Capabilities): LangChain FastAPI workflows for processing candidate LLM queries securely using PGVector retrieval. Split dynamically into `ai-api` and `ai-worker`.
+  - **`sync-service/`** (Golang Temporal Worker): Structurally separated Go service synchronizing external ATS data (Greenhouse) directly into Postgres.
 
 ## Requirements
-- Node.js (v18+)
-- Python (v3.9+)
-- Docker (for infra services)
-- Go (if compiling the sync-service manually)
+
+- Docker and Docker Compose (highly recommended for unified local execution)
+- Node.js (v18+) (if modifying frontend/api)
+- Python (v3.9+) (if modifying ai-service)
+- Go (v1.21+) (if compiling sync-service manually)
 
 ## Running Locally
 
-### 1. Start Infrastructure (Temporal, PostgreSQL, Redis)
-Navigate to the root directory and start the Docker containers:
+### 1. The Production-Ready Way (All-In-One Docker Compose)
+
+Navigate to the project root and start all services (alongside Temporal, PostgreSQL, and Redis infrastructure):
+
 ```bash
-docker-compose up -d
+docker-compose up --build -d
 ```
 
-### 2. Start the API Service
+This launches:
+- **Frontend** mapped to `http://localhost:5173`
+- **Node API** mapped to port `4000`
+- **Temporal UI** mapped to port `8233`
+- **AI API** mapped to port `8000`
+- Background workers (`sync-worker` and `ai-worker`) running autonomously.
+
+### 2. Manual Development Execution
+If you prefer running services independently for active debugging:
+
+**API Service:**
 ```bash
-cd api
+cd services/api
 npm install
 npm run dev
-# Note: Since it's a dev baseline, you can also use `npx ts-node src/index.ts`
 ```
-*(Runs on port 4000)*
 
-### 3. Start the AI Service
+**AI Service:**
 ```bash
-cd ai-service
+cd services/ai-service
 source venv/bin/activate
 pip install -r requirements.txt
-uvicorn main:app --reload
+python main.py api      # Run the API
+# python main.py worker # Run the Temporal Worker
 ```
-*(Runs on port 8000)*
 
-### 4. Start the Frontend Application
+**Frontend:**
 ```bash
-cd frontend
+cd services/frontend
 npm install
 npm run dev
 ```
-*(Runs on Vite's default port, e.g., 5173)*
 
-### 5. (Optional) Run the Golang Sync Service
+**Sync Service:**
 ```bash
-cd sync-service
+cd services/sync-service
 go run main.go
 ```
+
+## Testing
+
+Testing is mandatory across all active service layers.
+- **Backend Services:** Unit tests must isolate logic without live connections (mocking HTTP pipelines and databases safely using mock suites like `DATA-DOG/go-sqlmock` directly).
+- Use local testing tools (e.g., `go test ./...`) within respective service directories to validate builds entirely before merging iterations.
 
 ## Responsible AI & Governance
 This platform adheres to strict data compliance. All LLM endpoints are guarded against releasing candidate PII, company salaries, or internal policy documents improperly.
