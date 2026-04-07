@@ -1,9 +1,9 @@
 FROM golang:1.21-alpine AS builder
 
 WORKDIR /app
-COPY main.go .
-RUN go mod init sync-service && go mod tidy
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o sync-service .
+COPY . .
+RUN go mod tidy
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o sync-service ./main.go
 
 FROM alpine:latest
 
