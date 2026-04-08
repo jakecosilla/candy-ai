@@ -20,7 +20,7 @@ function App() {
             <div className="flex gap-4">
               <Link to="/" className="text-sm font-medium text-slate-600 hover:text-sky-600 px-3 py-2 rounded-lg hover:bg-slate-50 transition-colors">Career Site</Link>
               <Link to="/admin" className="text-sm font-medium text-slate-600 hover:text-sky-600 px-3 py-2 rounded-lg hover:bg-slate-50 transition-colors flex items-center gap-2">
-                <Activity size={16} /> Admin
+                <Activity size={16} /> Talent Ops
               </Link>
             </div>
           </nav>

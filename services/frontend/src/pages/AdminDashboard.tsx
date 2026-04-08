@@ -17,7 +17,7 @@ export default function AdminDashboard() {
             <div className="w-10 h-10 bg-sky-100 rounded-xl flex items-center justify-center text-sky-600">
               <Activity size={24} />
             </div>
-            <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">System Admin</h1>
+            <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Talent Operations Center</h1>
           </div>
           <p className="text-slate-500 text-sm">Monitor and orchestrate your Greenhouse ATS integrations.</p>
         </div>
@@ -69,7 +69,7 @@ export default function AdminDashboard() {
       <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
         <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
           <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-            <Database size={18} className="text-slate-400" /> Recent Activity
+            <Database size={18} className="text-slate-400" /> Recruitment Activity
           </h2>
           <button 
             onClick={fetchRuns}

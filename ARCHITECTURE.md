@@ -7,8 +7,8 @@ Candy AI is a modular, AI-first recruitment platform designed for scalability, r
 
 ```mermaid
 graph TD
-    User((Candidate/Admin))
-    Frontend[Frontend - React/Vite]
+    User((Candidate/Recruiter))
+    Frontend[Frontend - Talent Ops Hub]
     API[API BFF - Node.js/Express]
     SyncService[Sync Service - Go/Temporal]
     AIService[AI Service - Python/FastAPI/LangGraph]
@@ -21,7 +21,7 @@ graph TD
     Frontend <--> API
     API <--> AIService
     API <--> DB
-    API -- Trigger Sync --> Temporal
+    API -- Orchestrate Sync/Screening --> Temporal
     AIService <--> Temporal
     SyncService <--> Temporal
     SyncService <--> DB
@@ -34,35 +34,31 @@ graph TD
 ### 1. API (Node.js/Express)
 - **Primary Role**: The Backend-for-Frontend (BFF).
 - **Responsibilities**:
-  - Exposing REST endpoints for the frontend (Jobs, Filters, Admin).
-  - Validating user inputs via Zod.
-  - Aggregating data from PostgreSQL and Contentful CMS.
-  - Triggering Temporal workflows for Greenhouse synchronization.
-  - Providing health and readiness probes for orchestration.
+  - Managing **Candidates** and **Application** lifecycles.
+  - Exposing REST endpoints for Career Site and Talent Ops Hub.
+  - Validating recruiter actions and candidate submissions via Zod.
+  - Orchestrating multi-service workflows via Temporal.
 
 ### 2. Sync Service (Golang)
-- **Primary Role**: High-performance data ingestion.
+- **Primary Role**: Data Ingestion & Integration.
 - **Responsibilities**:
-  - Running a Temporal Worker for durable job synchronization.
-  - Fetching job listings from the Greenhouse API.
-  - Persisting data safely in PostgreSQL using transactional upserts.
-  - Marking stale listings as inactive to maintain inventory accuracy.
+  - Synchronizing the system with external ATS (Greenhouse).
+  - Normalizing external job data into the internal recruitment schema.
+  - Managing high-throughput transactional updates to jobs inventory.
 
 ### 3. AI Service (Python/FastAPI)
-- **Primary Role**: Intelligent candidate interaction.
+- **Primary Role**: Intelligent Screening & Evaluation.
 - **Responsibilities**:
-  - Hosting the recruiting chatbot via LangGraph state machines.
-  - Natural Language Understanding (NLU) for candidate queries.
-  - Decision logic for human escalation (via Temporal + LLM).
-  - Integration with OpenAI/LangChain.
+  - **Candidate Assessment**: Using LangGraph to screen applicants against job requirements.
+  - Generative Chat: Real-time candidate assistance and guidance.
+  - Providing suitability scores to the Recruiter dashboard.
 
 ### 4. Frontend (React)
-- **Primary Role**: User Interface.
+- **Primary Role**: Recruitment Interface.
 - **Responsibilities**:
-  - Presentation of job openings and filters.
-  - Integrated AI assistant interface.
-  - Admin dashboard for sync monitoring and manual triggering.
-  - Theming, dark mode, and glassmorphic aesthetics.
+  - **Career Site**: Public job discovery and application entry.
+  - **Talent Ops Hub**: Recruiter dashboard for pipeline management and integration health monitoring.
+  - Providing a cohesive, modern UI for both candidates and the hiring team.
 
 ## Data Strategy
 - **Persistence**: Shared PostgreSQL instance for jobs, sync history, and persistence.
