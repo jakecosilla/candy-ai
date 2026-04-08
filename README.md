@@ -6,13 +6,15 @@ Candy AI is an AI-powered careers platform designed to map candidate experiences
 
 This monorepo utilizes a clean, production-ready structure dividing infrastructural components and standalone business services:
 
+- **`docs/`**
+  - Centralized documentation for all platform components.
 - **`infra/`**
-  - Contains database schemas (`schema.sql`) and other deployment configurations.
+  - Database migrations, schemas, and verification scripts.
 - **`services/`**
-  - **`frontend/`** (Candidate Experience): React + TypeScript + Vite UI.
-  - **`api/`** (Node.js API BFF Layer): Express backend bridging frontend and backend services.
-  - **`ai-service/`** (Python Capabilities): LangChain FastAPI workflows for processing candidate LLM queries securely using PGVector retrieval. Split dynamically into `ai-api` and `ai-worker`.
-  - **`sync-service/`** (Golang Temporal Worker): Structurally separated Go service synchronizing external ATS data (Greenhouse) directly into Postgres.
+  - **`frontend/`**: React + TypeScript UI. [Docs here](docs/services/frontend.md)
+  - **`api/`**: Node.js BFF Layer. [Docs here](docs/services/api.md)
+  - **`ai-service/`**: Python AI orchestration. [Docs here](docs/services/ai-service.md)
+  - **`sync-service/`**: Go ATS synchronization. [Docs here](docs/services/sync-service.md)
 
 ## Requirements
 

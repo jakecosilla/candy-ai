@@ -10,6 +10,7 @@ from langgraph.graph import StateGraph, END
 from langgraph.prebuilt import ToolNode
 
 from src.temporal.workflows import AIReviewWorkflow
+from src.utils.logger import logger
 
 router = APIRouter()
 
@@ -35,7 +36,7 @@ async def analyze_message_node(state: AgentState):
             task_queue="ai-task-queue",
         )
     except Exception as e:
-        print(f"Temporal fail: {e}")
+        logger.error(f"Temporal execution error: {e}")
         decision = "SAFE_TO_AUTO_REPLY"
     
     return {"decision": decision}
@@ -52,7 +53,7 @@ async def chat_node(state: AgentState):
             response = await llm.ainvoke([system_msg] + state["messages"])
             reply = response.content
         except Exception as e:
-            print(f"LLM Error: {e}")
+            logger.error(f"LLM Reasoning failure: {e}")
             reply = _mock_reply(last_message)
     else:
         reply = _mock_reply(last_message)
