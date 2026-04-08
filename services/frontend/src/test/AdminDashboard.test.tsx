@@ -24,6 +24,6 @@ describe('AdminDashboard Component', () => {
 
     expect(screen.getByText('System Admin')).toBeInTheDocument();
     expect(screen.getByText('Force Sync Greenhouse')).toBeInTheDocument();
-    expect(screen.getByText('SUCCESS')).toBeInTheDocument();
+    expect(screen.getByText('Healthy')).toBeInTheDocument();
   });
 });
