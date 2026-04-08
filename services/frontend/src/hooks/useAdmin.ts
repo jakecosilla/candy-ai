@@ -23,7 +23,7 @@ export const useAdmin = () => {
   const triggerSync = async () => {
     setSyncing(true);
     try {
-      await apiClient.post('/admin/sync/jobs/greenhouse', {});
+      await apiClient.post('/sync/jobs/greenhouse', {});
       setTimeout(fetchRuns, 1500);
       setError(null);
     } catch (err: any) {
