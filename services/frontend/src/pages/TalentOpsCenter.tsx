@@ -1,8 +1,8 @@
 import { useEffect } from 'react';
-import { Activity, RefreshCw, CheckCircle2, AlertCircle, Database } from 'lucide-react';
+import { RefreshCw, CheckCircle2, AlertCircle, Database } from 'lucide-react';
 import { useAdmin } from '../hooks/useAdmin';
 
-export default function AdminDashboard() {
+export default function TalentOpsCenter() {
   const { runs, loadingRuns, syncing, error, fetchRuns, triggerSync } = useAdmin();
 
   useEffect(() => {
@@ -15,11 +15,11 @@ export default function AdminDashboard() {
         <div className="space-y-1">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-sky-100 rounded-xl flex items-center justify-center text-sky-600">
-              <Activity size={24} />
+              <RefreshCw size={24} />
             </div>
-            <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Talent Operations Center</h1>
+            <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Job Sync Hub</h1>
           </div>
-          <p className="text-slate-500 text-sm">Monitor and orchestrate your Greenhouse ATS integrations.</p>
+          <p className="text-slate-500 text-sm">Manage job listing synchronization and external integration status.</p>
         </div>
         
         <button

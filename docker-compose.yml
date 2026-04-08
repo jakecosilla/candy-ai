@@ -1,8 +1,6 @@
-version: '3.8'
-
 services:
   postgres:
-    image: pgvector/pgvector:15
+    image: docker.io/pgvector/pgvector:pg15
     environment:
       - POSTGRES_USER=candy
       - POSTGRES_PASSWORD=password
@@ -19,7 +17,7 @@ services:
       - pgdata:/var/lib/postgresql/data
 
   db-migrator:
-    image: migrate/migrate
+    image: docker.io/migrate/migrate:latest
     volumes:
       - ./infra/db/migrations:/migrations
     command: ["-path", "/migrations", "-database", "postgres://candy:password@postgres:5432/candy_ai?sslmode=disable", "up"]
@@ -28,9 +26,9 @@ services:
         condition: service_healthy
 
   temporal:
-    image: temporalio/auto-setup
+    image: docker.io/temporalio/auto-setup:latest
     environment:
-      - DB=postgresql
+      - DB=postgres12
       - DB_PORT=5432
       - POSTGRES_USER=candy
       - POSTGRES_PWD=password

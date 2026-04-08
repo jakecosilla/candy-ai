@@ -45,37 +45,23 @@ This launches:
 - **Temporal UI** mapped to [http://localhost:8233](http://localhost:8233)
 - Background workers (`sync-service` and `ai-service-worker`) running autonomously.
 
-### 2. Manual Development Execution
-If you prefer running services independently for active debugging:
+### 2. Manual Development Execution (Native Hot-Reload)
+For active development with hot-reloading across all layers:
 
-**API Service:**
 ```bash
-cd services/api
-npm install
-npm run dev
+# 1. Ensure Docker is running (for Postgres/Temporal infra)
+# 2. Run the orchestrator script
+./run-all.sh
 ```
 
-**AI Service:**
-```bash
-cd services/ai-service
-source venv/bin/activate
-pip install -r requirements.txt
-python main.py api      # Run the API
-# python main.py worker # Run the Temporal Worker
-```
+This script handles starting the Node API, Python AI Service, Go Sync Service, and Vite Frontend simultaneously with consolidated logging.
 
-**Frontend:**
-```bash
-cd services/frontend
-npm install
-npm run dev
-```
-
-**Sync Service:**
-```bash
-cd services/sync-service
-go run main.go
-```
+### 3. Individual Service Manual Start
+If you prefer running a single service for targeted debugging:
+- **API**: `cd services/api && npm run dev`
+- **Frontend**: `cd services/frontend && npm run dev`
+- **AI Service**: `cd services/ai-service && ./venv/bin/python src/main.py`
+- **Sync Service**: `cd services/sync-service && go run main.go`
 
 ## Testing
 

@@ -1,26 +1,34 @@
-import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Link, Navigate } from 'react-router-dom';
 import Home from './pages/Home';
 import JobDetails from './pages/JobDetails';
-import AdminDashboard from './pages/AdminDashboard';
+import TalentOpsCenter from './pages/TalentOpsCenter';
+import TalentLayout from './components/TalentLayout';
+import Pipeline from './pages/talent/Pipeline';
+import Applications from './pages/talent/Applications';
+import Candidates from './pages/talent/Candidates';
 import Chatbot from './components/Chatbot';
-import { Sparkles, Activity } from 'lucide-react';
+import { Sparkles, Briefcase } from 'lucide-react';
 
 function App() {
   return (
     <BrowserRouter>
       <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
+        {/* Main Navbar */}
         <header className="nav-blur">
           <nav className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between w-full">
             <Link to="/" className="flex items-center gap-2 group">
-              <div className="w-8 h-8 bg-sky-600 rounded-lg flex items-center justify-center text-white font-bold group-hover:scale-105 transition-transform">
+              <div className="w-8 h-8 bg-sky-600 rounded-lg flex items-center justify-center text-white font-bold group-hover:scale-105 transition-transform shadow-lg shadow-sky-600/20">
                 <Sparkles size={18} />
               </div>
               <span className="text-xl font-bold text-slate-900 tracking-tight">Candy<span className="text-sky-600">AI</span></span>
             </Link>
-            <div className="flex gap-4">
-              <Link to="/" className="text-sm font-medium text-slate-600 hover:text-sky-600 px-3 py-2 rounded-lg hover:bg-slate-50 transition-colors">Career Site</Link>
-              <Link to="/admin" className="text-sm font-medium text-slate-600 hover:text-sky-600 px-3 py-2 rounded-lg hover:bg-slate-50 transition-colors flex items-center gap-2">
-                <Activity size={16} /> Talent Ops
+            
+            <div className="flex items-center gap-1">
+              <Link to="/" className="text-sm font-bold text-slate-600 hover:text-sky-600 px-4 py-2 rounded-xl hover:bg-slate-50 transition-all flex items-center gap-2">
+                <Briefcase size={16} /> Career Site
+              </Link>
+              <Link to="/admin" className="text-sm font-bold text-slate-600 hover:text-sky-600 px-4 py-2 rounded-xl hover:bg-slate-50 transition-all flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-emerald-500" /> Talent Ops Hub
               </Link>
             </div>
           </nav>
@@ -30,7 +38,13 @@ function App() {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/jobs/:id" element={<JobDetails />} />
-            <Route path="/admin" element={<AdminDashboard />} />
+            
+            {/* Talent Operations Hub Routes */}
+            <Route path="/admin" element={<TalentLayout children={<Navigate to="/admin/pipeline" replace />} />} />
+            <Route path="/admin/pipeline" element={<TalentLayout children={<Pipeline />} />} />
+            <Route path="/admin/applications" element={<TalentLayout children={<Applications />} />} />
+            <Route path="/admin/candidates" element={<TalentLayout children={<Candidates />} />} />
+            <Route path="/admin/integrations" element={<TalentLayout children={<TalentOpsCenter />} />} />
           </Routes>
         </main>
 
