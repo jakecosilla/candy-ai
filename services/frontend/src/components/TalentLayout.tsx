@@ -5,24 +5,66 @@ import {
   Layers, 
   RefreshCw, 
   BarChart3, 
-  UserCheck
+  UserCheck,
+  ChevronDown
 } from 'lucide-react';
+import { useRole } from '../context/RoleContext';
+import type { UserRole } from '../context/RoleContext';
 
 export default function TalentLayout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
+  const { role, setRole } = useRole();
 
-  const menuItems = [
-    { label: 'Live Pipeline', icon: Layers, path: '/admin/pipeline' },
-    { label: 'Applications', icon: FileText, path: '/admin/applications' },
-    { label: 'Candidate Base', icon: Users, path: '/admin/candidates' },
-    { label: 'Hiring Insights', icon: BarChart3, path: '/admin/insights' },
-    { label: 'Job Sync Hub', icon: RefreshCw, path: '/admin/integrations' },
+  const allItems = [
+    { label: 'Live Pipeline', icon: Layers, path: '/admin/pipeline', roles: ['RECRUITER', 'HIRING_MANAGER', 'ADMIN'] },
+    { label: 'Applications', icon: FileText, path: '/admin/applications', roles: ['RECRUITER', 'ADMIN', 'HIRING_MANAGER'] },
+    { label: 'Candidate Base', icon: Users, path: '/admin/candidates', roles: ['RECRUITER', 'ADMIN'] },
+    { label: 'Hiring Insights', icon: BarChart3, path: '/admin/insights', roles: ['RECRUITER', 'ADMIN'] },
+    { label: 'Job Sync Hub', icon: RefreshCw, path: '/admin/integrations', roles: ['ADMIN'] },
   ];
+
+  const menuItems = allItems.filter(item => item.roles.includes(role));
+
+  const roleLabels: Record<UserRole, string> = {
+    RECRUITER: 'Recruiter',
+    ADMIN: 'Talent Ops Admin',
+    HIRING_MANAGER: 'Hiring Manager',
+    CANDIDATE: 'Candidate',
+  };
 
   return (
     <div className="flex gap-8">
       {/* Sidebar Navigation */}
-      <aside className="w-64 shrink-0 space-y-8">
+      <aside className="w-64 shrink-0 space-y-6">
+        {/* Role Selector Dashboard Widget */}
+        <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm space-y-3">
+          <div className="flex items-center justify-between text-[10px] font-bold text-slate-400 uppercase tracking-widest px-2">
+            <span>Viewing as</span>
+          </div>
+          <div className="relative group">
+            <div className="flex items-center justify-between bg-slate-50 border border-slate-100 px-3 py-2 rounded-xl text-sm font-bold text-slate-900">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-sky-500" />
+                {roleLabels[role]}
+              </div>
+              <ChevronDown size={14} className="text-slate-400" />
+            </div>
+            
+            {/* Simple Role Switcher Popover for Demo */}
+            <div className="absolute top-full left-0 w-full bg-white border border-slate-200 rounded-xl mt-1 shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 overflow-hidden">
+              {(Object.keys(roleLabels) as UserRole[]).map((r) => r !== 'CANDIDATE' && (
+                <button
+                  key={r}
+                  onClick={() => setRole(r)}
+                  className={`w-full text-left px-4 py-2 text-xs font-bold hover:bg-sky-50 transition-colors ${role === r ? 'text-sky-600' : 'text-slate-600'}`}
+                >
+                  {roleLabels[r]}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
         <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
           <nav className="space-y-1">
             {menuItems.map((item) => {
