@@ -21,22 +21,27 @@ This monorepo utilizes a clean, production-ready structure dividing infrastructu
 - Python (v3.9+) (if modifying ai-service)
 - Go (v1.21+) (if compiling sync-service manually)
 
-## Running Locally
-
 ### 1. The Production-Ready Way (All-In-One Docker Compose)
 
-Navigate to the project root and start all services (alongside Temporal, PostgreSQL, and Redis infrastructure):
+Navigate to the project root and start all services (alongside Temporal and PostgreSQL infrastructure):
 
 ```bash
+# 1. Prepare env
+cp .env.example .env
+
+# 2. Start stack
 docker-compose up --build -d
+
+# 3. Verify Health
+./infra/scripts/smoke-test.sh
 ```
 
 This launches:
-- **Frontend** mapped to `http://localhost:5173`
-- **Node API** mapped to port `4000`
-- **Temporal UI** mapped to port `8233`
-- **AI API** mapped to port `8000`
-- Background workers (`sync-worker` and `ai-worker`) running autonomously.
+- **Frontend** mapped to [http://localhost](http://localhost) (Nginx production build)
+- **Node API** mapped to [http://localhost:4000](http://localhost:4000)
+- **AI API** mapped to [http://localhost:8000](http://localhost:8000)
+- **Temporal UI** mapped to [http://localhost:8233](http://localhost:8233)
+- Background workers (`sync-service` and `ai-service-worker`) running autonomously.
 
 ### 2. Manual Development Execution
 If you prefer running services independently for active debugging:

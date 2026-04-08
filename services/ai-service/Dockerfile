@@ -2,9 +2,19 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
+# Install system dependencies if any are needed for libraries
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY main.py .
+# Copy source code
+COPY src ./src
 
-CMD ["python", "main.py", "api"]
+# Set PYTHONPATH to include current directory so src is a package
+ENV PYTHONPATH=/app
+
+# Default command (can be overridden by compose)
+CMD ["python", "src/main.py"]
