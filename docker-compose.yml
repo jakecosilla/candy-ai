@@ -9,6 +9,14 @@ services:
       - POSTGRES_DB=candy_ai
     ports:
       - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U candy -d candy_ai"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    volumes:
+      - pgdata:/var/lib/postgresql/data
 
   db-migrator:
     image: migrate/migrate
@@ -16,12 +24,8 @@ services:
       - ./infra/db/migrations:/migrations
     command: ["-path", "/migrations", "-database", "postgres://candy:password@postgres:5432/candy_ai?sslmode=disable", "up"]
     depends_on:
-      - postgres
-
-  redis:
-    image: redis:alpine
-    ports:
-      - "6379:6379"
+      postgres:
+        condition: service_healthy
 
   temporal:
     image: temporalio/auto-setup
@@ -35,60 +39,92 @@ services:
       - "7233:7233"
       - "8233:8233"
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z localhost 7233"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
 
   api:
     build:
       context: ./services/api
-      dockerfile: Dockerfile
     environment:
       - PORT=4000
+      - DATABASE_URL=postgres://candy:password@postgres:5432/candy_ai?sslmode=disable
+      - TEMPORAL_HOST=temporal:7233
+      - NODE_ENV=production
     ports:
       - "4000:4000"
     depends_on:
-      - postgres
-      - redis
+      postgres:
+        condition: service_healthy
+      temporal:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:4000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
 
-  ai-api:
+  ai-service-api:
     build:
       context: ./services/ai-service
-      dockerfile: Dockerfile
-    command: ["python", "main.py", "api"]
+    command: ["python", "src/main.py"]
     environment:
       - TEMPORAL_HOST=temporal:7233
       - PORT=8000
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
     ports:
       - "8000:8000"
     depends_on:
-      - temporal
+      temporal:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
 
-  ai-worker:
+  ai-service-worker:
     build:
       context: ./services/ai-service
-      dockerfile: Dockerfile
-    command: ["python", "main.py", "worker"]
+    command: ["python", "src/worker.py"]
     environment:
       - TEMPORAL_HOST=temporal:7233
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
     depends_on:
-      - temporal
+      temporal:
+        condition: service_healthy
+    restart: unless-stopped
 
-  sync-worker:
+  sync-service:
     build:
       context: ./services/sync-service
-      dockerfile: Dockerfile
     environment:
       - TEMPORAL_HOST=temporal:7233
       - DATABASE_URL=postgres://candy:password@postgres:5432/candy_ai?sslmode=disable
     depends_on:
-      - temporal
-      - postgres
+      postgres:
+        condition: service_healthy
+      temporal:
+        condition: service_healthy
+    restart: unless-stopped
 
   frontend:
     build:
       context: ./services/frontend
-      dockerfile: Dockerfile
     ports:
-      - "5173:80"
+      - "80:80"
     depends_on:
-      - api
-      - ai-api
+      api:
+        condition: service_healthy
+      ai-service-api:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  pgdata:
