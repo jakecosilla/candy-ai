@@ -1,63 +1,30 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Briefcase, MapPin, Search } from 'lucide-react';
-
-interface Job {
-  id: string;
-  title: string;
-  department: string;
-  location: string;
-  type: string;
-  description: string;
-}
-
-interface Filters {
-  departments: string[];
-  locations: string[];
-}
+import { apiClient } from '../api/client';
+import { useJobs } from '../hooks/useJobs';
 
 export default function Home() {
-  const [jobs, setJobs] = useState<Job[]>([]);
-  const [filters, setFilters] = useState<Filters>({ departments: [], locations: [] });
-  const [loading, setLoading] = useState(true);
+  const { jobs, loading, error, fetchJobs } = useJobs();
+  const [filters, setFilters] = useState<{ departments: string[]; locations: string[] }>({ departments: [], locations: [] });
   const [pageContent, setPageContent] = useState<any>(null);
   
   const [selectedDept, setSelectedDept] = useState('');
   const [selectedLoc, setSelectedLoc] = useState('');
 
   useEffect(() => {
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000';
-
-    // Fetch CMS Contentful Page
-    fetch(`${apiUrl}/api/pages/home`)
-      .then(res => res.json())
-      .then(data => setPageContent(data.fields))
-      .catch(err => console.error(err));
-
-    fetch(`${apiUrl}/api/jobs/filters`)
-      .then(res => res.json())
-      .then(data => setFilters(data))
-      .catch(err => console.error(err));
-  }, []);
+    fetchJobs({ department: selectedDept, location: selectedLoc });
+  }, [selectedDept, selectedLoc, fetchJobs]);
 
   useEffect(() => {
-    setLoading(true);
-    const params = new URLSearchParams();
-    if (selectedDept) params.append('department', selectedDept);
-    if (selectedLoc) params.append('location', selectedLoc);
+    apiClient.get('/api/pages/home')
+      .then(data => setPageContent(data?.fields))
+      .catch(err => console.error('Failed to parse CMS data', err));
 
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000';
-    fetch(`${apiUrl}/api/jobs?${params.toString()}`)
-      .then(res => res.json())
-      .then(data => {
-        setJobs(data);
-        setLoading(false);
-      })
-      .catch(err => {
-        console.error(err);
-        setLoading(false);
-      });
-  }, [selectedDept, selectedLoc]);
+    apiClient.get('/api/jobs/filters')
+      .then(data => setFilters(data))
+      .catch(err => console.error('Failed to parse filters', err));
+  }, []);
 
   return (
     <>
@@ -98,6 +65,11 @@ export default function Home() {
 
       {loading ? (
         <div className="loader"></div>
+      ) : error ? (
+           <div className="glass-card" style={{ textAlign: 'center', padding: '4rem 2rem' }}>
+              <h3 style={{ color: '#ef4444' }}>Server Sync Failed</h3>
+              <p className="description" style={{ marginTop: '0.5rem' }}>{error}</p>
+           </div>
       ) : jobs.length === 0 ? (
         <div className="glass-card" style={{ textAlign: 'center', padding: '4rem 2rem' }}>
           <Briefcase size={48} color="var(--text-secondary)" style={{ margin: '0 auto 1rem', opacity: 0.5 }} />
@@ -118,7 +90,7 @@ export default function Home() {
                   </span>
                   <span className="badge">{job.type}</span>
                 </div>
-                <p className="description" style={{ marginTop: '1.25rem' }}>{job.description}</p>
+                <p className="description" style={{ marginTop: '1.25rem', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{job.description}</p>
               </div>
             </Link>
           ))}

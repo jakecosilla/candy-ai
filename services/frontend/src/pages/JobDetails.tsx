@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, MapPin, Clock, Building, Send } from 'lucide-react';
+import { apiClient } from '../api/client';
 
 interface Job {
   id: string;
@@ -17,9 +18,7 @@ export default function JobDetails() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000';
-    fetch(`${apiUrl}/api/jobs/${id}`)
-      .then(res => res.json())
+    apiClient.get(`/api/jobs/${id}`)
       .then(data => {
         setJob(data);
         setLoading(false);
