@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"candy-ai/sync-service/internal/models"
@@ -35,4 +36,23 @@ func TestSyncJobs(t *testing.T) {
 	assert.NoError(t, err)
 	err = mock.ExpectationsWereMet()
 	assert.NoError(t, err)
+}
+
+func TestSyncJobsError(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	assert.NoError(t, err)
+	defer db.Close()
+
+	repo := NewJobRepository(db)
+
+	jobs := []models.GreenhouseJob{
+		{ID: 1, Title: "Engineer"},
+	}
+
+	mock.ExpectBegin()
+	mock.ExpectExec("UPDATE jobs SET is_active = FALSE").WillReturnError(fmt.Errorf("db error"))
+	mock.ExpectRollback()
+
+	err = repo.SyncJobs(context.Background(), jobs)
+	assert.Error(t, err)
 }
